@@ -1,0 +1,14 @@
+---
+
+- name: elastic.elasticsearch
+  version: master
+
+- name: ansible-thehive
+  src: https://github.com/rhythmictech/ansible-thehive.git
+  scm: git
+  version: master
+
+- name: ansible-cortex
+  src: https://github.com/rhythmictech/ansible-cortex.git
+  scm: git
+  version: master

@@ -1,0 +1,40 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: true
+  become: yes
+  vars:
+
+    # ElasticSearch vars
+    es_instance_name: "thehive"
+    es_version: 5.6.14
+    es_major_version: 5.x
+    es_data_dirs:
+      - "/data/es"
+    es_config:
+      node.name: "thehive"
+      cluster.name: "thehive"
+      node.data: true
+      node.master: true
+      script.inline: on
+      thread_pool.index.queue_size: 100000
+      thread_pool.search.queue_size: 100000
+      thread_pool.bulk.queue_size: 100000
+    es_scripts: true
+    es_templates: false
+    es_version_lock: false
+    es_heap_size: 1g
+    es_xpack_features: ["alerting","monitoring"]
+
+    # Let Cortex install nginx, since it runs first..
+    thehive_install_nginx: false
+  tasks:
+  - include_vars:
+      file: /tmp/local_config.json
+  - include_role:
+      name: elastic.elasticsearch
+  - include_role:
+      name: ansible-cortex
+    when: cortex_enabled|default(true)
+  - include_role:
+      name: ansible-thehive
