@@ -5,6 +5,8 @@ create a standalone installation of TheHive and Cortex in AWS. The intended
 use is to create your own AMI and then create a deployed instance via
 Terraform. Terraform will preserve the data volume between upgrades.
 
+**This is experimental.**
+
 ## Usage
 To create an AMI, create a local_config.json file that is based on the
 local_config.sample.json file. Not all variables are required (for example,
@@ -50,6 +52,24 @@ The API key can be generated similarly:
 Create the AMI by running the Makefile:
 
 ```make all```
+
+A very simplified idea of how this would be created in terraform..
+
+```
+module "thehive" {
+  source    = "https://github.com/rhythmictech/thehive-standalone.git"
+
+  name = "thehive"
+  vpc_id = "${data.terraform_remote_state.vpc.vpc_id}"
+  instance_subnet = "${data.terraform_remote_state.vpc.private_subnets[0]}"
+  instance_image = "${data.aws_ami.centos_latest.id}"
+  instance_type = "t3.large"
+  keypair = "default"
+  instance_additional_sgs = ["${data.terraform_remote_state.admin_access.admin_access_sg_id}"]
+  availability_zone = "${data.terraform_remote_state.vpc.availability_zones[0]}"
+
+}
+```
 
 ## Vagrant
 Vagrant can be used to test the build process. The supplied Vagrantfile in
