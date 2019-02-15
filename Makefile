@@ -1,6 +1,9 @@
 
-all:
-	build
+all: build
 
+clean:
+	/bin/rm packer_vars.json
+	
 build:
-	packer build -var-file=local_config.json packer-thehive-standalone.json
+	cat local_config.json |jq '[ to_entries[] | select(.key | startswith("packer")) ] | from_entries' > packer_vars.json
+	packer build -var-file=packer_vars.json packer-thehive-standalone.json

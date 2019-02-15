@@ -1,34 +1,41 @@
 {
   "description": "TheHive/Cortex Standalone Image",
   "variables": {
-    "region": "us-east-1",
-    "root_device_size": "8",
-    "fs_type": "xfs"
+    "packer_aws_region": "us-east-1",
+    "packer_root_device_size": "8",
+    "packer_fs_type": "xfs"
   },
   "builders": [
       {
         "type": "amazon-ebs",
-        "access_key": "{{user `aws_access_key`}}",
-        "secret_key": "{{user `aws_secret_key`}}",
-        "ami_name": "bastion-{{isotime \"2006-01-02-030405\" | clean_ami_name}}",
-        "ami_description": "TheHive/Cortex (standalone) {{timestamp}}",
-        "region": "{{ user `region` }}",
-        "subnet_id": "{{ user `aws_ami_build_subnet` }}",
+        "access_key": "{{user `packer_aws_access_key`}}",
+        "secret_key": "{{user `packer_aws_secret_key`}}",
+        "ami_name": "thehive-{{isotime \"2006-01-02-030405\" | clean_ami_name}}",
+        "ami_description": "TheHive/Cortex (standalone) {{ timestamp }}",
+        "ami_users": "{{user `packer_aws_ami_users`}}",
+        "region": "{{ user `packer_aws_region` }}",
+        "subnet_id": "{{ user `packer_aws_ami_build_subnet` }}",
         "source_ami_filter": {
           "filters": {
             "virtualization-type": "hvm",
-            "name": "{{ user `aws_ami_filter_name` }}",
+            "name": "{{ user `packer_aws_ami_filter_name` }}",
             "root-device-type": "ebs"
           },
-          "owners": ["{{ user `aws_ami_filter_owner` }}"],
+          "owners": ["{{ user `packer_aws_ami_filter_owner` }}"],
           "most_recent": true
         },
-        "instance_type": "t2.micro",
-        "ssh_username": "{{ user `aws_ami_ssh_username` }}"
+        "instance_type": "t2.medium",
+        "ssh_username": "{{ user `packer_aws_ami_ssh_username` }}"
       }
   ],
 
   "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/01-packages.sh"
+      ]
+    },
     {
       "type": "file",
       "source": "local_config.json",
@@ -45,16 +52,13 @@
         "galaxy_file": "ansible/requirements.yml",
         "playbook_dir": "ansible",
         "playbook_file": "ansible/playbook.yml",
-        "role_paths": [
-            "ansible/roles"
-        ],
         "staging_directory": "~/ansible"
 
     },
     {
       "type": "shell",
       "inline": [
-        "/bin/rm -f /tmp/local-config.json"
+        "/bin/rm -f /tmp/local_config.json"
       ]
     }
   ]

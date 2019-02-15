@@ -1,6 +1,5 @@
 
-all:
-	build
+all: clean build
 
 clean:
 	vagrant destroy -f

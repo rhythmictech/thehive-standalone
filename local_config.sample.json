@@ -1,10 +1,11 @@
 {
 
 
-  "aws_ami_filter_owner": "<AWS Account containing base AMI template>",
-  "aws_ami_filter_name": "<Prefix of AMI to search for latest build of>",
-  "aws_ami_ssh_username": "<Name of user to SSH as (typically ec2-user)>",
-  "aws_ami_build_subnet": "<subnet id where ami will be built>",
+  "packer_aws_ami_filter_owner": "<AWS Account containing base AMI template>",
+  "packer_aws_ami_filter_name": "<Prefix of AMI to search for latest build of>",
+  "packer_aws_ami_ssh_username": "<Name of user to SSH as (typically ec2-user)>",
+  "packer_aws_ami_build_subnet": "<subnet id where ami will be built>",
+  "packer_aws_ami_users": "<comma separated list of account ids to grant access to the ami, if any>",
 
   "cortex_url": "<Cortex URL>",
   "cortex_seed_initial_username": "<Initial user to create>",
@@ -12,14 +13,14 @@
   "cortex_api_key": "<Generate a unique key (see defaults.yml for details)>",
 
   "cortex_auth_vouch": {
-    "enabled": false,
+    "enabled": "false",
     "url": "<Vouch server>",
     "logon_header": "THEHIVE_USER"
   },
 
   "cortex_auth_ldap": {
-    "enabled": false,
-    "use_ssl": true,
+    "enabled": "false",
+    "use_ssl": "true",
     "servers": [ "<LDAP_SERVER:PORT>" ],
     "bind_dn": "<BIND DN>",
     "bind_pw": "<BIND PW>",
@@ -40,14 +41,14 @@
   },
 
   "thehive_auth_vouch": {
-    "enabled": false,
+    "enabled": "false",
     "url": "<Vouch server>",
     "logon_header": "THEHIVE_USER"
   },
 
   "thehive_auth_ldap": {
-    "enabled": false,
-    "use_ssl": true,
+    "enabled": "false",
+    "use_ssl": "true",
     "servers": [ "<LDAP_SERVER:PORT>" ],
     "bind_dn": "<BIND DN>",
     "bind_pw": "<BIND PW>",

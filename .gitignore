@@ -1,4 +1,5 @@
 local_config.json
+packer_vars.json
 work/
 work/*
 

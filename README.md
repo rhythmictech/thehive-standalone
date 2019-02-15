@@ -5,8 +5,6 @@ create a standalone installation of TheHive and Cortex in AWS. The intended
 use is to create your own AMI and then create a deployed instance via
 Terraform. Terraform will preserve the data volume between upgrades.
 
-**This is experimental.**
-
 ## Usage
 To create an AMI, create a local_config.json file that is based on the
 local_config.sample.json file. Not all variables are required (for example,
@@ -55,22 +53,37 @@ Create the AMI by running the Makefile:
 
 A very simplified idea of how this would be created in terraform..
 
-```
+```yaml
 module "thehive" {
-  source    = "https://github.com/rhythmictech/thehive-standalone.git"
+  source    = "/Users/cdaniluk/dev/rhythmic/thehive-standalone"
 
   name = "thehive"
-  vpc_id = "${data.terraform_remote_state.vpc.vpc_id}"
-  instance_subnet = "${data.terraform_remote_state.vpc.private_subnets[0]}"
-  instance_image = "${data.aws_ami.centos_latest.id}"
-  instance_type = "t3.large"
-  keypair = "default"
-  instance_additional_sgs = ["${data.terraform_remote_state.admin_access.admin_access_sg_id}"]
-  availability_zone = "${data.terraform_remote_state.vpc.availability_zones[0]}"
 
+  instance_additional_sgs = ["${local.admin_access_sg_id}"]
+  instance_image = "${data.aws_ami.thehive-latest.id}"
+  instance_subnet = "${local.subnet}"
+  instance_type = "t2.medium"
+  keypair = "${local.keypair}"
+
+  availability_zone = "${local.availability_zones}"
+  vpc_id = "${local.vpc_id}"
+
+  # Place instance behind an SSL-terminating ALB
+  alb_create = true
+  alb_subnets = ["subnet-12345678, subnet-23456789, subnect-34567890"]
+  alb_internal = "true"
+  alb_certificate = "arn:aws:acm:us-east-1:0123456790:certificate/..."
+
+  # Create Route53 entries for thehive and cortex
+  r53_create  = true
+  r53_zone    = "Z12345679ASDF"
+  r53_thehive_name    = "thehive.corp.local"
+  r53_cortex_name    = "cortex.corp.local"
 }
+
 ```
 
 ## Vagrant
 Vagrant can be used to test the build process. The supplied Vagrantfile in
-the ansible directory closely simulates the
+the ansible directory will go through the same process as packer to provision
+the instance. It can be used for troubleshooting. See the Makefile.
