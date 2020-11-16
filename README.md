@@ -1,5 +1,10 @@
 # thehive-standalone
 
+*This is not maintained. There are a number of better ways to run TheHive, particularly
+thanks to better Docker support than when this was written. Also, there's better ways to
+build and run using newer features in Terraform, Ansible, Packer, etc. Keeping this repo
+for historical purposes, but you probably shouldn't use it.*
+
 A combination of Terraform module, packer builder and ansible modules that
 create a standalone installation of TheHive and Cortex in AWS. The intended
 use is to create your own AMI and then create a deployed instance via

@@ -1,37 +1,29 @@
-
-
 locals {
-  tag_map = {
-    Name = "${var.name}"
-  }
+  instance_tags = merge(var.tags,
+    { Name = var.name }
+  )
 }
 
-resource "aws_ebs_volume" "data_vol" {
-  availability_zone = "${var.availability_zone}"
-
-  type = "${var.ebs_volume_type}"
-  size = "${var.ebs_volume_size}"
-
-  tags = "${merge(local.tag_map, var.tags)}"
+resource "aws_ebs_volume" "this" {
+  availability_zone = var.availability_zone
+  size = var.ebs_volume_size
+  tags = var.tags
+  type = var.ebs_volume_type
 }
-
-
-
-
 
 data "template_file" "init" {
-  template = "${file("${path.module}/cloudinit/init.cfg")}"
+  template = file("${path.module}/cloudinit/init.cfg")
 }
 
-data "template_cloudinit_config" "config" {
-  gzip          = true
+data "template_cloudinit_config" "this" {
   base64_encode = true
+  gzip          = true
 
   # Main cloud-config configuration file.
   part {
     filename     = "init.cfg"
     content_type = "text/cloud-config"
-    content      = "${data.template_file.init.rendered}"
+    content      = data.template_file.init.rendered
   }
 
   part {
@@ -47,7 +39,7 @@ INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
 while true
 do
     # attach EBS (run multiple times in case the volume was still detaching elsewhere)
-    aws --region us-east-1 ec2 attach-volume --volume-id ${aws_ebs_volume.data_vol.id} --instance-id $INSTANCE_ID --device /dev/xvdg
+    aws --region us-east-1 ec2 attach-volume --volume-id ${aws_ebs_volume.this.id} --instance-id $INSTANCE_ID --device /dev/xvdg
 
     # see if the volume is mounted before proceeding
     lsblk |grep xvdg
@@ -105,20 +97,24 @@ else
   mount /data
 fi
 EOF
-  }
 
+  }
 }
 
-resource "aws_instance" "instance" {
-  monitoring                          = "${var.enable_monitoring}"
-  iam_instance_profile                = "${aws_iam_instance_profile.instance_profile.id}"
-  ami                                 = "${var.instance_image}"
-  instance_type                       = "${var.instance_type}"
-  key_name                            = "${var.keypair}"
-  subnet_id                           = "${var.instance_subnet}"
-  vpc_security_group_ids              = ["${concat(list(aws_security_group.thehive_sg.id), var.instance_additional_sgs)}"]
+resource "aws_instance" "this" {
+  monitoring           = var.enable_monitoring
+  iam_instance_profile = aws_iam_instance_profile.this.id
+  ami                  = var.instance_image
+  instance_type        = var.instance_type
+  key_name             = var.keypair
+  subnet_id            = var.instance_subnet
+  tags                 = local.instance_tags
+  user_data_base64     = data.template_cloudinit_config.this.rendered
 
-  tags = "${merge(local.tag_map, var.tags)}"
+  vpc_security_group_ids = concat(
+    [aws_security_group.this.id],
+    var.instance_additional_sgs,
+  )
 
   root_block_device {
     delete_on_termination = true
@@ -126,5 +122,8 @@ resource "aws_instance" "instance" {
     volume_type           = "gp2"
   }
 
-  user_data_base64 = "${data.template_cloudinit_config.config.rendered}"
+lifecycle {
+  ignore_changes = [user_data_base64, ami]
 }
+}
+

@@ -1,70 +1,65 @@
-resource "aws_iam_policy" "iam_policy" {
-  name_prefix        = "thehive-ec2-policy"
+data "aws_iam_policy_document" "assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
 
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
 
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": [
-                "logs:CreateLogGroup",
+data "aws_iam_policy_document" "this" {
+  statement {
+      effect = "Allow"
+      resources = ["arn:aws:logs:*:*:*"]
+
+    actions   = [
+        "logs:CreateLogGroup",
                 "logs:CreateLogStream",
                 "logs:PutLogEvents",
                 "logs:DescribeLogStreams"
-            ],
-            "Resource": [
-                "arn:aws:logs:*:*:*"
-            ],
-            "Effect": "Allow"
-        },
-        {
-            "Action": [
-                "ec2:AttachVolume",
+    ]
+    
+  }
+  statement {
+      effect = "Allow"
+
+      actions = [
+"ec2:AttachVolume",
                 "ec2:DetachVolume"
-            ],
-            "Resource": [
-                "${aws_ebs_volume.data_vol.arn}",
-                "${aws_instance.instance.arn}"
-            ],
-            "Effect": "Allow",
-            "Condition": {
-                "ArnEquals": {"ec2:SourceInstanceARN": "${aws_instance.instance.arn}"}
-            }
-        }
-    ]
-}
-EOF
+      ]
+      resources = [
+aws_ebs_volume.this.arn,
+                aws_instance.this.arn
+      ]
+
+      condition {
+          test = "ArnEquals"
+          values = [aws_instance.this.arn]
+          variable = "ec2:SourceInstanceARN"
+      }
+  }
 }
 
-resource "aws_iam_role" "iam_role" {
+resource "aws_iam_policy" "this" {
+  name_prefix = "thehive-ec2-policy"
+  policy = data.aws_iam_policy_document.this.json
+}
+
+resource "aws_iam_role" "this" {
   name_prefix = "thehive_role"
-  path = "/"
-
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "sts:AssumeRole",
-            "Principal": {
-               "Service": "ec2.amazonaws.com"
-            },
-            "Effect": "Allow",
-            "Sid": ""
-        }
-    ]
-}
-EOF
-
+  assume_role_policy = data.aws_iam_policy_document.assume.json
+  path        = "/"
 }
 
-resource "aws_iam_role_policy_attachment" "iam_role_policy_attach" {
-  role       = "${aws_iam_role.iam_role.name}"
-  policy_arn = "${aws_iam_policy.iam_policy.arn}"
+resource "aws_iam_role_policy_attachment" "this" {
+  policy_arn = aws_iam_policy.this.arn
+  role       = aws_iam_role.this.name
 }
 
-resource "aws_iam_instance_profile" "instance_profile" {
+resource "aws_iam_instance_profile" "this" {
   name_prefix = "thehive_instance_profile"
-  role = "${aws_iam_role.iam_role.name}"
+  role        = aws_iam_role.this.name
 }
+
